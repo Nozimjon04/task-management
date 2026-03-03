@@ -23,12 +23,9 @@ WORKDIR /app
 
 COPY taskmanager/ .
 
-# Create directories for static and media files
+# Create directories for static and media files, owned by app user
 RUN mkdir -p /app/staticfiles /app/media && \
     chown -R app:app /app
-
-# Collect static files
-RUN python manage.py collectstatic --noinput
 
 USER app
 
