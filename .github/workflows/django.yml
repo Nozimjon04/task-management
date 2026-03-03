@@ -52,7 +52,6 @@ jobs:
           PROJECT_DIR: ${{ env.PROJECT_DIR }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}
-          DJANGO_CSRF_TRUSTED_ORIGINS: ${{ secrets.DJANGO_CSRF_TRUSTED_ORIGINS }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -60,7 +59,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: CICD_TOKEN,IMAGE_NAME,PROJECT_DIR,DJANGO_SECRET_KEY,DJANGO_ALLOWED_HOSTS,DJANGO_CSRF_TRUSTED_ORIGINS,POSTGRES_DB,POSTGRES_USER,POSTGRES_PASSWORD
+          envs: CICD_TOKEN,IMAGE_NAME,PROJECT_DIR,DJANGO_SECRET_KEY,DJANGO_ALLOWED_HOSTS,POSTGRES_DB,POSTGRES_USER,POSTGRES_PASSWORD
           script: |
             set -e
 
@@ -76,11 +75,14 @@ jobs:
 
             git pull origin main
 
+            # Build CSRF origins from ALLOWED_HOSTS (prepend http:// to each host)
+            CSRF_ORIGINS=$(echo "$DJANGO_ALLOWED_HOSTS" | tr ',' '\n' | sed 's|^|http://|' | paste -sd ',')
+
             printf '%s\n' \
               "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" \
               "DJANGO_DEBUG=False" \
               "DJANGO_ALLOWED_HOSTS=$DJANGO_ALLOWED_HOSTS" \
-              "DJANGO_CSRF_TRUSTED_ORIGINS=$DJANGO_CSRF_TRUSTED_ORIGINS" \
+              "DJANGO_CSRF_TRUSTED_ORIGINS=$CSRF_ORIGINS" \
               "POSTGRES_DB=$POSTGRES_DB" \
               "POSTGRES_USER=$POSTGRES_USER" \
               "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" \
