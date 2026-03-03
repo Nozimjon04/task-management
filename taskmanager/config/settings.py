@@ -88,6 +88,6 @@ LOGIN_REDIRECT_URL = "task_list"
 LOGOUT_REDIRECT_URL = "login"
 LOGIN_URL = "login"
 
-CSRF_TRUSTED_ORIGINS = os.environ.get(
-    "DJANGO_CSRF_TRUSTED_ORIGINS", "http://task-management.metabio.uz,https://task-management.metabio.uz"
-).split(",")
+CSRF_TRUSTED_ORIGINS = [
+    "https://task-management.metabio.uz"
+]
