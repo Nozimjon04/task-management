@@ -89,5 +89,5 @@ LOGOUT_REDIRECT_URL = "login"
 LOGIN_URL = "login"
 
 CSRF_TRUSTED_ORIGINS = os.environ.get(
-    "DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost,http://127.0.0.1"
+    "DJANGO_CSRF_TRUSTED_ORIGINS", "http://task-management.metabio.uz,https://task-management.metabio.uz"
 ).split(",")
