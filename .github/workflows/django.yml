@@ -65,17 +65,22 @@ jobs:
           script: |
             set -e
 
-            # Create project directory if not exists
+            # If directory exists but not a git repo → remove it
+            if [ -d "$PROJECT_DIR" ] && [ ! -d "$PROJECT_DIR/.git" ]; then
+              rm -rf "$PROJECT_DIR"
+            fi
+
+            # Clone repo if not exists
             if [ ! -d "$PROJECT_DIR" ]; then
               git clone https://github.com/Nozimjon04/task-management.git "$PROJECT_DIR"
             fi
 
             cd "$PROJECT_DIR"
 
-            # Always pull latest compose changes
+            # Pull latest docker-compose updates
             git pull origin main
 
-            # Generate .env file from secrets
+            # Generate .env from GitHub secrets
             cat > .env <<EOF
 DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY
 DJANGO_DEBUG=False
@@ -88,14 +93,16 @@ POSTGRES_HOST=db
 POSTGRES_PORT=5432
 EOF
 
-            # Login to GHCR (token passed as env var, not interpolated)
+            # Login to GHCR
             echo "$CICD_TOKEN" | docker login ghcr.io -u nozimjon04 --password-stdin
 
-            # Pull new image
+            # Pull latest image
             docker compose pull
 
-            # Restart safely
+            # Restart containers safely
             docker compose up -d --remove-orphans
 
-            # Cleanup old images
+            # Cleanup unused images
             docker image prune -af
+
+            echo "Deployment successful!"
