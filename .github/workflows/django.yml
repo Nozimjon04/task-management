@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: task-management
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/nozimjon04/task-management:latest
+  PROJECT_DIR: /opt/task-management
 
 jobs:
   build_and_deploy:
@@ -19,40 +20,47 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Login to GHCR
-      - name: Log in to GitHub Container Registry
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.CICD_TOKEN }}
 
-      # Build and push image
-      - name: Build and Push Docker image
+      - name: Build and Push Image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: ${{ env.IMAGE_NAME }}
 
-      # Deploy to server
-      - name: Deploy via SSH
+      - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/task-management
+            set -e
 
-            # Login to GHCR on server
+            # Create project directory if not exists
+            if [ ! -d "${PROJECT_DIR}" ]; then
+              git clone https://github.com/Nozimjon04/task-management.git ${PROJECT_DIR}
+            fi
+
+            cd ${PROJECT_DIR}
+
+            # Always pull latest compose changes
+            git pull origin main
+
+            # Login to GHCR
             echo ${{ secrets.CICD_TOKEN }} | docker login ghcr.io -u nozimjon04 --password-stdin
 
-            # Pull latest image
+            # Pull new image
             docker compose pull
 
-            # Restart containers
-            docker compose up -d
+            # Restart safely
+            docker compose up -d --remove-orphans
 
-            # Cleanup unused images
-            docker image prune -f
+            # Cleanup old images
+            docker image prune -af
