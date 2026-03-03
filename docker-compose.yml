@@ -17,7 +17,7 @@ services:
       retries: 5
 
   app:
-    build: .
+    image: ghcr.io/nozimjon04/task-management:latest   # 👈 changed
     restart: always
     env_file:
       - .env
