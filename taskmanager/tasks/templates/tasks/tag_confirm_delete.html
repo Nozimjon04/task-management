@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Delete Tag{% endblock %}
+{% block content %}
+<div class="card border-danger">
+    <div class="card-header bg-danger text-white"><h4>Delete Tag</h4></div>
+    <div class="card-body">
+        <p>Are you sure you want to delete the tag <strong>{{ tag.name }}</strong>?</p>
+        <form method="post">
+            {% csrf_token %}
+            <button class="btn btn-danger" type="submit">Yes, Delete</button>
+            <a href="{% url 'tag_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
