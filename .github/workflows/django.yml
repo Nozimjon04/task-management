@@ -2,7 +2,8 @@ name: task-management CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 env:
   IMAGE_NAME: ghcr.io/nozimjon04/task-management:latest
@@ -36,8 +37,6 @@ jobs:
           context: .
           push: true
           tags: ${{ env.IMAGE_NAME }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy to Server
@@ -65,22 +64,18 @@ jobs:
           script: |
             set -e
 
-            # If directory exists but not a git repo → remove it
             if [ -d "$PROJECT_DIR" ] && [ ! -d "$PROJECT_DIR/.git" ]; then
               rm -rf "$PROJECT_DIR"
             fi
 
-            # Clone repo if not exists
             if [ ! -d "$PROJECT_DIR" ]; then
               git clone https://github.com/Nozimjon04/task-management.git "$PROJECT_DIR"
             fi
 
             cd "$PROJECT_DIR"
 
-            # Pull latest docker-compose updates
             git pull origin main
 
-            # Generate .env from GitHub secrets
             cat > .env <<EOF
 DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY
 DJANGO_DEBUG=False
@@ -93,16 +88,10 @@ POSTGRES_HOST=db
 POSTGRES_PORT=5432
 EOF
 
-            # Login to GHCR
             echo "$CICD_TOKEN" | docker login ghcr.io -u nozimjon04 --password-stdin
 
-            # Pull latest image
             docker compose pull
-
-            # Restart containers safely
             docker compose up -d --remove-orphans
-
-            # Cleanup unused images
             docker image prune -af
 
-            echo "Deployment successful!"
+            echo "Deployment successful"
