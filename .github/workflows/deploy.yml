@@ -1,9 +1,10 @@
 name: Deploy to Server
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Build & Push Docker Image"]
+    types:
+      - completed
 
 jobs:
   deploy:
@@ -17,8 +18,21 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/task-management || git clone https://github.com/Nozimjon04/task-management.git /var/www/task-management
+            # Go to project folder (clone if first time)
+            if [ ! -d "/var/www/task-management" ]; then
+              git clone https://github.com/Nozimjon04/task-management.git /var/www/task-management
+            fi
+
             cd /var/www/task-management
+
+            # Pull latest code (for nginx config, compose file updates etc.)
             git pull origin main
-            docker compose down
-            docker compose up -d --build
+
+            # Pull latest Docker image from GHCR
+            docker compose pull
+
+            # Restart containers with new image
+            docker compose up -d
+
+            # Optional: remove unused images
+            docker image prune -f
