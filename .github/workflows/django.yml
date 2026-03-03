@@ -51,11 +51,17 @@ jobs:
           CICD_TOKEN: ${{ secrets.CICD_TOKEN }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           PROJECT_DIR: ${{ env.PROJECT_DIR }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}
+          DJANGO_CSRF_TRUSTED_ORIGINS: ${{ secrets.DJANGO_CSRF_TRUSTED_ORIGINS }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: CICD_TOKEN,IMAGE_NAME,PROJECT_DIR
+          envs: CICD_TOKEN,IMAGE_NAME,PROJECT_DIR,DJANGO_SECRET_KEY,DJANGO_ALLOWED_HOSTS,DJANGO_CSRF_TRUSTED_ORIGINS,POSTGRES_DB,POSTGRES_USER,POSTGRES_PASSWORD
           script: |
             set -e
 
@@ -68,6 +74,19 @@ jobs:
 
             # Always pull latest compose changes
             git pull origin main
+
+            # Generate .env file from secrets
+            cat > .env <<EOF
+DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=$DJANGO_ALLOWED_HOSTS
+DJANGO_CSRF_TRUSTED_ORIGINS=$DJANGO_CSRF_TRUSTED_ORIGINS
+POSTGRES_DB=$POSTGRES_DB
+POSTGRES_USER=$POSTGRES_USER
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+EOF
 
             # Login to GHCR (token passed as env var, not interpolated)
             echo "$CICD_TOKEN" | docker login ghcr.io -u nozimjon04 --password-stdin
